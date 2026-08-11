@@ -1,0 +1,65 @@
+# Dependencies
+/node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Testing
+/coverage/
+
+# Next.js generated output
+/.next/
+/out/
+/.open-next/
+
+# Production build output
+/build/
+/dist/
+
+# Tool caches
+/.cache/
+/.turbo/
+/.vite/
+.eslintcache
+
+# Miscellaneous system files
+.DS_Store
+Thumbs.db
+*.pem
+
+# Debug logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files and secrets
+.env*
+!.env.example
+!.env.*.example
+
+.dev.vars*
+!.dev.vars.example
+
+# Vercel local state
+/.vercel/
+
+# TypeScript generated files
+*.tsbuildinfo
+next-env.d.ts
+
+# Offline generation datasets
+# These must be reproducible using committed scripts.
+/scripts/data/
+
+# Cloudflare local state
+/.wrangler/
+# Python bytecode
+**/__pycache__/
+*.py[cod]
+
