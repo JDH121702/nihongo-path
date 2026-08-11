@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Check, Lock, Headphones, Library } from "lucide-react";
 import { speakingUnits } from "@/data/speaking/units";
 import { speakingLessons } from "@/data/speaking/curriculum";
-import { getVocabForUnit } from "@/data/vocab";
+import { getVocabCountForUnit } from "@/data/vocab/manifest";
 import { getUnitListenPack } from "@/data/input/unit-listen";
 import { fluencyStages } from "@/data/fluency";
 import { useProgress } from "@/lib/progress";
@@ -168,7 +168,7 @@ export default function SpeakingPathPage() {
                       </div>
 
                       {(() => {
-                        const vocabCount = getVocabForUnit(unit.id).length;
+                        const vocabCount = getVocabCountForUnit(unit.id);
                         if (vocabCount === 0) return null;
                         const firstUnlocked = lessons.some((lesson) => {
                           if (!lesson) return false;

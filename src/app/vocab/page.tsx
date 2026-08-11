@@ -1,8 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { Check, Lock, Library } from "lucide-react";
-import { vocabPacks, vocabStats, getVocabForUnit } from "@/data/vocab";
+import {
+  getVocabCountForUnit,
+  vocabPackSummaries,
+  vocabStats,
+} from "@/data/vocab/manifest";
 import { speakingUnits } from "@/data/speaking/units";
 import { useProgress } from "@/lib/progress";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -13,7 +18,22 @@ function isExpansionPack(unit: number) {
 
 export default function VocabIndexPage() {
   const { progress, loaded, getLessonProgress } = useProgress();
-  const introduced = new Set(progress.vocabIntroduced);
+  const { introduced, introducedByUnit } = useMemo(() => {
+    const ids = new Set(progress.vocabIntroduced);
+    const counts = new Map<number, number>();
+
+    for (const id of ids) {
+      const match = /^v-(\d+)-(\d+)$/.exec(id);
+      if (!match) continue;
+      const unit = Number(match[1]);
+      const index = Number(match[2]);
+      const wordCount = getVocabCountForUnit(unit);
+      if (index < 1 || index > wordCount) continue;
+      counts.set(unit, (counts.get(unit) ?? 0) + 1);
+    }
+
+    return { introduced: ids, introducedByUnit: counts };
+  }, [progress.vocabIntroduced]);
 
   const speakingUnitTouched = (unitId: number) => {
     const unit = speakingUnits.find((u) => u.id === unitId);
@@ -63,15 +83,19 @@ export default function VocabIndexPage() {
       </div>
 
       <div className="space-y-3">
-        {vocabPacks.map((pack) => {
+        {vocabPackSummaries.map((pack) => {
           let unlocked = false;
 
           if (isExpansionPack(pack.unit)) {
             const gateUnit = Math.min(4 + (pack.unit - 101), 16);
-            const priorPack = vocabPacks.find((p) => p.unit === pack.unit - 1);
+            const priorPack = vocabPackSummaries.find(
+              (candidate) => candidate.unit === pack.unit - 1,
+            );
             const priorTouched =
               pack.unit === 101 ||
-              (priorPack?.wordIds.some((id) => introduced.has(id)) ?? false);
+              (priorPack
+                ? (introducedByUnit.get(priorPack.unit) ?? 0) > 0
+                : false);
             unlocked =
               speakingUnitTouched(gateUnit) ||
               speakingUnitDone(gateUnit) ||
@@ -94,10 +118,9 @@ export default function VocabIndexPage() {
             unlocked = prevDone || anyInUnit;
           }
 
-          const words = getVocabForUnit(pack.unit);
-          const packIntroduced = pack.wordIds.filter((id) =>
-            introduced.has(id),
-          ).length;
+          const packIntroduced = introducedByUnit.get(pack.unit) ?? 0;
+          const packComplete =
+            pack.wordCount > 0 && packIntroduced === pack.wordCount;
           const label = isExpansionPack(pack.unit)
             ? `Pack ${pack.unit}: ${pack.title}`
             : `Unit ${pack.unit}: ${pack.title}`;
@@ -115,16 +138,14 @@ export default function VocabIndexPage() {
             >
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                  packIntroduced === pack.wordIds.length &&
-                  pack.wordIds.length > 0
+                  packComplete
                     ? "bg-success/20 text-success"
                     : unlocked
                       ? "bg-speaking/10 text-speaking"
                       : "bg-surface text-muted"
                 }`}
               >
-                {packIntroduced === pack.wordIds.length &&
-                pack.wordIds.length > 0 ? (
+                {packComplete ? (
                   <Check className="h-5 w-5" />
                 ) : unlocked ? (
                   isExpansionPack(pack.unit) ? (
@@ -139,7 +160,7 @@ export default function VocabIndexPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold">{label}</p>
                 <p className="text-sm text-muted truncate">
-                  {words.length} words · {packIntroduced} in your deck
+                  {pack.wordCount} words · {packIntroduced} in your deck
                   {isExpansionPack(pack.unit) ? " · expansion" : ""}
                 </p>
               </div>
